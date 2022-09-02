@@ -10,10 +10,12 @@ dotenv.config();
 const __filename: string = fileURLToPath(import.meta.url);
 const __dirname: string = dirname(__filename);
 const database: string = "";
+const password: any = process.env.MONGO;
+
 
 await mongoose
   .connect(
-    `mongodb+srv://shushyy:foxfire1riftwalk1@cluster0.szrpyuj.mongodb.net/${database}`
+    `mongodb+srv://shushyy:${password}@cluster0.szrpyuj.mongodb.net/${database}`
   )
   .then(() => {
     console.log("Connected to database");
