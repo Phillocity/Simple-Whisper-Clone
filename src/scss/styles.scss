@@ -1,98 +1,13 @@
-$green: #1abc9c;
-$green-darker: #097962;
-
-html,
 body {
-  margin: 0;
-  padding: 0;
+	background-color: #E8ECEF;
 }
-
-a {
-  &:visited,
-  &:link,
-  &:active {
-    text-decoration: none;
-  }
-
-  &:hover {
-    color: $green !important;
-  }
+.centered {
+	padding-top: 200px;
+	text-align: center;
 }
-
-.container-fluid {
-  padding-top: 70px;
-  padding-bottom: 70px;
-}
-
-.container.body-container {
-  min-height: 80vh;
-}
-
-.navbar {
-  padding-top: 15px;
-  padding-bottom: 15px;
-  border: 0;
-  border-radius: 0;
-  margin-bottom: 0;
-  font-size: 12px;
-  letter-spacing: 5px;
-  min-height: 10vh;
-}
-
-.navbar-nav {
-  li {
-    a {
-      color: black;
-      text-decoration: none;
-
-      &:hover {
-        color: $green !important;
-      }
-    }
-  }
-
-  li:not(:last-child) {
-    border-right: 1px solid rgba(122, 122, 122, 0.397);
-  }
-
-  .nav-link {
-    padding-right: 10px !important;
-    padding-left: 10px !important;
-  }
-}
-
-.footer {
-  width: 100%;
-  min-height: 10vh;
-  background-color: $green;
-
-  p {
-    color: #fff;
-    margin: 0;
-  }
-}
-
-.btn-primary {
-  background-color: $green !important;
-  border-color: $green !important;
-
-  &:hover {
-    background-color: $green-darker !important;
-    border-color: $green-darker !important;
-  }
-
-  &:active {
-    background-color: $green !important;
-    border-color: $green !important;
-  }
-
-  &:visited {
-    background-color: $green !important;
-    border-color: $green !important;
-  }
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px $green;
-  }
+.secret-text {
+	text-align: center;
+	font-size: 2rem;
+	color: #fff;
+	background-color: #000;
 }

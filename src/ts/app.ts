@@ -25,7 +25,7 @@ await mongoose
   });
 
 const app: express.Application = express();
-const port: any = process.env.PORT || 8080
+const port: any = process.env.PORT
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
