@@ -9,9 +9,8 @@ dotenv.config();
 
 const __filename: string = fileURLToPath(import.meta.url);
 const __dirname: string = dirname(__filename);
-const database: string = "";
+const database: string = "userDB";
 const password: any = process.env.MONGO;
-
 
 await mongoose
   .connect(
@@ -25,7 +24,7 @@ await mongoose
   });
 
 const app: express.Application = express();
-const port: any = process.env.PORT
+const port: any = process.env.PORT;
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -33,16 +32,41 @@ app.use(express.static("public"));
 app.listen(port);
 app.locals.lodash = lodash;
 
-const placeholderleSchema = new mongoose.Schema({
-  title: {
-    require: true,
-    type: String,
-  },
-  body: String,
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true },
+  password: { type: String, required: true },
 });
 
-const Model = mongoose.model("Model", placeholderleSchema);
+const User = mongoose.model("User", userSchema);
 
 app.get("/", (req: Request, res: Response) => {
   res.render("home");
+});
+
+app.route("/login")
+  .get((req: Request, res: Response) => {
+  res.render("login");
+  })
+  .post((req: Request, res: Response) => {
+    const username = req.body.username;
+   const password = req.body.password;
+  })
+
+app.get("/register", (req: Request, res: Response) => {
+  res.render("register");
+});
+
+app.post("/register", (req: Request, res: Response) => {
+  const username = req.body.username;
+  const password = req.body.password;
+
+  const newUser = new User({ email: username, password: password });
+
+  newUser.save((err: any) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.render("secrets");
+    }
+  });
 });
