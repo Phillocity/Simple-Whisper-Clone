@@ -5,7 +5,7 @@ import bodyParser from "body-parser";
 import lodash from "lodash";
 import mongoose from "mongoose";
 // import mongooseEncryption from "mongoose-encryption";
-import md5 from "md5";
+import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
@@ -13,6 +13,7 @@ const __dirname = dirname(__filename);
 const database = "userDB";
 const password = process.env.MONGO;
 const encryption = process.env.SECRET;
+const saltRounds = 10;
 await mongoose
     .connect(`mongodb+srv://shushyy:${password}@cluster0.szrpyuj.mongodb.net/${database}`)
     .then(() => console.log("Connected to database"))
@@ -46,13 +47,17 @@ app
 })
     .post((req, res) => {
     const username = req.body.username;
-    const password = md5(req.body.password);
+    const password = req.body.password;
     User.findOne({ email: username }, (err, foundUser) => {
         if (err) {
             res.send("User not found, please try again");
         }
-        else if (foundUser && foundUser.password === password) {
-            res.render("secrets");
+        else if (foundUser) {
+            bcrypt.compare(password, foundUser.password, (err, result) => {
+                if (result === true) {
+                    res.render("secrets");
+                }
+            });
         }
     });
 });
@@ -66,14 +71,16 @@ app
 })
     .post((req, res) => {
     const username = req.body.username;
-    const password = md5(req.body.password);
-    const newUser = new User({ email: username, password: password });
-    newUser.save((err) => {
-        if (err) {
-            console.log(err);
-        }
-        else {
-            res.render("secrets");
-        }
+    const password = req.body.password;
+    bcrypt.hash(password, saltRounds, (err, hash) => {
+        const newUser = new User({ email: username, password: hash });
+        newUser.save((err) => {
+            if (err) {
+                console.log(err);
+            }
+            else {
+                res.render("secrets");
+            }
+        });
     });
 });

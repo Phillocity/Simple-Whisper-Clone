@@ -5,6 +5,7 @@ import bodyParser from "body-parser";
 import lodash from "lodash";
 import mongoose from "mongoose";
 // import mongooseEncryption from "mongoose-encryption";
+import bcrypt from "bcrypt";
 import md5 from "md5";
 import dotenv from "dotenv";
 dotenv.config();
@@ -14,6 +15,7 @@ const __dirname: string = dirname(__filename);
 const database: string = "userDB";
 const password: any = process.env.MONGO;
 const encryption: any = process.env.SECRET;
+const saltRounds: number = 10;
 
 await mongoose
   .connect(
@@ -56,13 +58,21 @@ app
   })
   .post((req: Request, res: Response) => {
     const username = req.body.username;
-    const password = md5(req.body.password);
+    const password = req.body.password;
 
     User.findOne({ email: username }, (err: any, foundUser: any) => {
       if (err) {
         res.send("User not found, please try again");
-      } else if (foundUser && foundUser.password === password) {
-        res.render("secrets");
+      } else if (foundUser) {
+        bcrypt.compare(
+          password,
+          foundUser.password,
+          (err: any, result: any) => {
+            if (result === true) {
+              res.render("secrets");
+            }
+          }
+        );
       }
     });
   });
@@ -77,14 +87,17 @@ app
   })
   .post((req: Request, res: Response) => {
     const username = req.body.username;
-    const password = md5(req.body.password);
-    const newUser = new User({ email: username, password: password });
+    const password = req.body.password;
 
-    newUser.save((err: any) => {
-      if (err) {
-        console.log(err);
-      } else {
-        res.render("secrets");
-      }
+    bcrypt.hash(password, saltRounds, (err: any, hash: any) => {
+      const newUser = new User({ email: username, password: hash });
+
+      newUser.save((err: any) => {
+        if (err) {
+          console.log(err);
+        } else {
+          res.render("secrets");
+        }
+      });
     });
   });
