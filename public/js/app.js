@@ -4,20 +4,18 @@ import { dirname } from "path";
 import bodyParser from "body-parser";
 import lodash from "lodash";
 import mongoose from "mongoose";
+import mongooseEncryption from "mongoose-encryption";
 import dotenv from "dotenv";
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const database = "userDB";
 const password = process.env.MONGO;
+const encryption = process.env.SECRET;
 await mongoose
     .connect(`mongodb+srv://shushyy:${password}@cluster0.szrpyuj.mongodb.net/${database}`)
-    .then(() => {
-    console.log("Connected to database");
-})
-    .catch((err) => {
-    console.log(err);
-});
+    .then(() => console.log("Connected to database"))
+    .catch((err) => console.log(err));
 const app = express();
 const port = process.env.PORT;
 app.set("view engine", "ejs");
@@ -29,6 +27,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true },
     password: { type: String, required: true },
 });
+userSchema.plugin(mongooseEncryption, { secret: encryption, encryptedFields: ["password"] });
 const User = mongoose.model("User", userSchema);
 /* ---------------------------------------------------------------------------------------------- */
 /*                                            Homepage                                            */
@@ -51,12 +50,8 @@ app
         if (err) {
             res.send("User not found, please try again");
         }
-        else {
-            if (foundUser) {
-                if (foundUser.password === password) {
-                    res.render("secrets");
-                }
-            }
+        else if (foundUser && foundUser.password === password) {
+            res.render("secrets");
         }
     });
 });

@@ -4,6 +4,7 @@ import { dirname, join as pathJoin } from "path";
 import bodyParser from "body-parser";
 import lodash from "lodash";
 import mongoose from "mongoose";
+import mongooseEncryption from "mongoose-encryption";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -11,17 +12,12 @@ const __filename: string = fileURLToPath(import.meta.url);
 const __dirname: string = dirname(__filename);
 const database: string = "userDB";
 const password: any = process.env.MONGO;
+const encryption: any = process.env.SECRET
 
 await mongoose
-  .connect(
-    `mongodb+srv://shushyy:${password}@cluster0.szrpyuj.mongodb.net/${database}`
-  )
-  .then(() => {
-    console.log("Connected to database");
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+  .connect(`mongodb+srv://shushyy:${password}@cluster0.szrpyuj.mongodb.net/${database}`)
+  .then(() => console.log("Connected to database"))
+  .catch((err) => console.log(err));
 
 const app: express.Application = express();
 const port: any = process.env.PORT;
@@ -37,12 +33,14 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
 });
 
+userSchema.plugin(mongooseEncryption, {secret: encryption, encryptedFields: ["password"]});
 const User = mongoose.model("User", userSchema);
 
 /* ---------------------------------------------------------------------------------------------- */
 /*                                            Homepage                                            */
 /* ---------------------------------------------------------------------------------------------- */
 app.get("/", (req: Request, res: Response) => {
+
   res.render("home");
 });
 
@@ -59,14 +57,9 @@ app
     const password = req.body.password;
 
     User.findOne({ email: username }, (err: any, foundUser: any) => {
-      if (err) {
-        res.send("User not found, please try again");
-      } else {
-        if (foundUser) {
-          if (foundUser.password === password) {
-            res.render("secrets");
-          }
-        }
+      if (err) {res.send("User not found, please try again")}
+      else if (foundUser && foundUser.password === password) {
+        res.render("secrets");
       }
     });
   });
