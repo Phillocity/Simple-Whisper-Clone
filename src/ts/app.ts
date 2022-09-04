@@ -4,7 +4,8 @@ import { dirname, join as pathJoin } from "path";
 import bodyParser from "body-parser";
 import lodash from "lodash";
 import mongoose from "mongoose";
-import mongooseEncryption from "mongoose-encryption";
+// import mongooseEncryption from "mongoose-encryption";
+import md5 from "md5";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -12,10 +13,12 @@ const __filename: string = fileURLToPath(import.meta.url);
 const __dirname: string = dirname(__filename);
 const database: string = "userDB";
 const password: any = process.env.MONGO;
-const encryption: any = process.env.SECRET
+const encryption: any = process.env.SECRET;
 
 await mongoose
-  .connect(`mongodb+srv://shushyy:${password}@cluster0.szrpyuj.mongodb.net/${database}`)
+  .connect(
+    `mongodb+srv://shushyy:${password}@cluster0.szrpyuj.mongodb.net/${database}`
+  )
   .then(() => console.log("Connected to database"))
   .catch((err) => console.log(err));
 
@@ -33,14 +36,13 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
 });
 
-userSchema.plugin(mongooseEncryption, {secret: encryption, encryptedFields: ["password"]});
+// userSchema.plugin(mongooseEncryption, {secret: encryption, encryptedFields: ["password"]});
 const User = mongoose.model("User", userSchema);
 
 /* ---------------------------------------------------------------------------------------------- */
 /*                                            Homepage                                            */
 /* ---------------------------------------------------------------------------------------------- */
 app.get("/", (req: Request, res: Response) => {
-
   res.render("home");
 });
 
@@ -54,11 +56,12 @@ app
   })
   .post((req: Request, res: Response) => {
     const username = req.body.username;
-    const password = req.body.password;
+    const password = md5(req.body.password);
 
     User.findOne({ email: username }, (err: any, foundUser: any) => {
-      if (err) {res.send("User not found, please try again")}
-      else if (foundUser && foundUser.password === password) {
+      if (err) {
+        res.send("User not found, please try again");
+      } else if (foundUser && foundUser.password === password) {
         res.render("secrets");
       }
     });
@@ -74,7 +77,7 @@ app
   })
   .post((req: Request, res: Response) => {
     const username = req.body.username;
-    const password = req.body.password;
+    const password = md5(req.body.password);
     const newUser = new User({ email: username, password: password });
 
     newUser.save((err: any) => {

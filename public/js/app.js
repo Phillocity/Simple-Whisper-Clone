@@ -4,7 +4,8 @@ import { dirname } from "path";
 import bodyParser from "body-parser";
 import lodash from "lodash";
 import mongoose from "mongoose";
-import mongooseEncryption from "mongoose-encryption";
+// import mongooseEncryption from "mongoose-encryption";
+import md5 from "md5";
 import dotenv from "dotenv";
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
@@ -27,7 +28,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true },
     password: { type: String, required: true },
 });
-userSchema.plugin(mongooseEncryption, { secret: encryption, encryptedFields: ["password"] });
+// userSchema.plugin(mongooseEncryption, {secret: encryption, encryptedFields: ["password"]});
 const User = mongoose.model("User", userSchema);
 /* ---------------------------------------------------------------------------------------------- */
 /*                                            Homepage                                            */
@@ -45,7 +46,7 @@ app
 })
     .post((req, res) => {
     const username = req.body.username;
-    const password = req.body.password;
+    const password = md5(req.body.password);
     User.findOne({ email: username }, (err, foundUser) => {
         if (err) {
             res.send("User not found, please try again");
@@ -65,7 +66,7 @@ app
 })
     .post((req, res) => {
     const username = req.body.username;
-    const password = req.body.password;
+    const password = md5(req.body.password);
     const newUser = new User({ email: username, password: password });
     newUser.save((err) => {
         if (err) {
