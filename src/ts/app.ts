@@ -39,34 +39,56 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model("User", userSchema);
 
+/* ---------------------------------------------------------------------------------------------- */
+/*                                            Homepage                                            */
+/* ---------------------------------------------------------------------------------------------- */
 app.get("/", (req: Request, res: Response) => {
   res.render("home");
 });
 
-app.route("/login")
+/* ---------------------------------------------------------------------------------------------- */
+/*                                              Login                                             */
+/* ---------------------------------------------------------------------------------------------- */
+app
+  .route("/login")
   .get((req: Request, res: Response) => {
-  res.render("login");
+    res.render("login");
   })
   .post((req: Request, res: Response) => {
     const username = req.body.username;
-   const password = req.body.password;
-  })
+    const password = req.body.password;
 
-app.get("/register", (req: Request, res: Response) => {
-  res.render("register");
-});
-
-app.post("/register", (req: Request, res: Response) => {
-  const username = req.body.username;
-  const password = req.body.password;
-
-  const newUser = new User({ email: username, password: password });
-
-  newUser.save((err: any) => {
-    if (err) {
-      console.log(err);
-    } else {
-      res.render("secrets");
-    }
+    User.findOne({ email: username }, (err: any, foundUser: any) => {
+      if (err) {
+        res.send("User not found, please try again");
+      } else {
+        if (foundUser) {
+          if (foundUser.password === password) {
+            res.render("secrets");
+          }
+        }
+      }
+    });
   });
-});
+
+/* ---------------------------------------------------------------------------------------------- */
+/*                                            Register                                            */
+/* ---------------------------------------------------------------------------------------------- */
+app
+  .route("/register")
+  .get((req: Request, res: Response) => {
+    res.render("register");
+  })
+  .post((req: Request, res: Response) => {
+    const username = req.body.username;
+    const password = req.body.password;
+    const newUser = new User({ email: username, password: password });
+
+    newUser.save((err: any) => {
+      if (err) {
+        console.log(err);
+      } else {
+        res.render("secrets");
+      }
+    });
+  });

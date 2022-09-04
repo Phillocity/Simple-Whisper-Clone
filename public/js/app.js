@@ -30,21 +30,45 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
 });
 const User = mongoose.model("User", userSchema);
+/* ---------------------------------------------------------------------------------------------- */
+/*                                            Homepage                                            */
+/* ---------------------------------------------------------------------------------------------- */
 app.get("/", (req, res) => {
     res.render("home");
 });
-app.route("/login")
+/* ---------------------------------------------------------------------------------------------- */
+/*                                              Login                                             */
+/* ---------------------------------------------------------------------------------------------- */
+app
+    .route("/login")
     .get((req, res) => {
     res.render("login");
 })
     .post((req, res) => {
     const username = req.body.username;
     const password = req.body.password;
+    User.findOne({ email: username }, (err, foundUser) => {
+        if (err) {
+            res.send("User not found, please try again");
+        }
+        else {
+            if (foundUser) {
+                if (foundUser.password === password) {
+                    res.render("secrets");
+                }
+            }
+        }
+    });
 });
-app.get("/register", (req, res) => {
+/* ---------------------------------------------------------------------------------------------- */
+/*                                            Register                                            */
+/* ---------------------------------------------------------------------------------------------- */
+app
+    .route("/register")
+    .get((req, res) => {
     res.render("register");
-});
-app.post("/register", (req, res) => {
+})
+    .post((req, res) => {
     const username = req.body.username;
     const password = req.body.password;
     const newUser = new User({ email: username, password: password });
