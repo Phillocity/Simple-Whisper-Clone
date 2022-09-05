@@ -4,23 +4,19 @@ import { dirname, join as pathJoin } from "path";
 import bodyParser from "body-parser";
 import lodash from "lodash";
 import mongoose from "mongoose";
-// import mongooseEncryption from "mongoose-encryption";
-import bcrypt from "bcrypt";
-import md5 from "md5";
+import session from "express-session";
+import passport from "passport";
+import passportLocalMongoose from "passport-local-mongoose";
 import dotenv from "dotenv";
 dotenv.config();
 
 const __filename: string = fileURLToPath(import.meta.url);
 const __dirname: string = dirname(__filename);
-const database: string = "userDB";
-const password: any = process.env.MONGO;
-const encryption: any = process.env.SECRET;
-const saltRounds: number = 10;
+const database: any = process.env.DATABASE
+const databaseURL: any = `${process.env.MONGO}${database}`;
 
 await mongoose
-  .connect(
-    `mongodb+srv://shushyy:${password}@cluster0.szrpyuj.mongodb.net/${database}`
-  )
+  .connect(databaseURL)
   .then(() => console.log("Connected to database"))
   .catch((err) => console.log(err));
 
@@ -33,13 +29,29 @@ app.use(express.static("public"));
 app.listen(port);
 app.locals.lodash = lodash;
 
+app.use(
+  session({
+    secret: "SecretTest",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
+
+/* ----------------------------------------- User schema ---------------------------------------- */
 const userSchema = new mongoose.Schema({
-  email: { type: String, required: true },
-  password: { type: String, required: true },
+  username: { type: String },
+  password: { type: String },
 });
 
-// userSchema.plugin(mongooseEncryption, {secret: encryption, encryptedFields: ["password"]});
+userSchema.plugin(passportLocalMongoose);
+
 const User = mongoose.model("User", userSchema);
+passport.use(User.createStrategy());
+
+passport.serializeUser(User.serializeUser() as any);
+passport.deserializeUser(User.deserializeUser());
 
 /* ---------------------------------------------------------------------------------------------- */
 /*                                            Homepage                                            */
@@ -57,22 +69,24 @@ app
     res.render("login");
   })
   .post((req: Request, res: Response) => {
-    const username = req.body.username;
-    const password = req.body.password;
+    const userData = req.body.username;
+    const passData = req.body.password;
+    if (userData.length === 0 || passData.length === 0) {
+      return res.render("login", { error: "Please fill in all fields" });
+    }
 
-    User.findOne({ email: username }, (err: any, foundUser: any) => {
+    const user = new User({
+      username: userData,
+      password: passData,
+    });
+
+    req.login(user, (err) => {
       if (err) {
-        res.send("User not found, please try again");
-      } else if (foundUser) {
-        bcrypt.compare(
-          password,
-          foundUser.password,
-          (err: any, result: any) => {
-            if (result === true) {
-              res.render("secrets");
-            }
-          }
-        );
+        console.log(err);
+      } else {
+        passport.authenticate("local")(req, res, () => {
+          res.redirect("/secrets");
+        });
       }
     });
   });
@@ -86,18 +100,43 @@ app
     res.render("register");
   })
   .post((req: Request, res: Response) => {
-    const username = req.body.username;
-    const password = req.body.password;
-
-    bcrypt.hash(password, saltRounds, (err: any, hash: any) => {
-      const newUser = new User({ email: username, password: hash });
-
-      newUser.save((err: any) => {
+    User.register(
+      new User({ username: req.body.username }),
+      req.body.password,
+      (err, user) => {
         if (err) {
           console.log(err);
+          res.redirect("/register");
         } else {
-          res.render("secrets");
+          passport.authenticate("local")(req, res, () => {
+            res.redirect("/secrets");
+          });
         }
-      });
-    });
+      }
+    );
   });
+
+/* ---------------------------------------------------------------------------------------------- */
+/*                                             Secrets                                            */
+/* ---------------------------------------------------------------------------------------------- */
+app.route("/secrets").get((req: Request, res: Response) => {
+  if (req.isAuthenticated()) {
+    res.render("secrets");
+  } else {
+    res.redirect("/login");
+  }
+});
+
+/* ---------------------------------------------------------------------------------------------- */
+/*                                             Logout                                             */
+/* ---------------------------------------------------------------------------------------------- */
+app.route("/logout")
+.get((req: Request, res: Response) => {
+  req.logout((err) => {
+    if (err) {
+      console.log(err);
+    } else {
+      res.redirect("/");
+    }
+  });
+});
