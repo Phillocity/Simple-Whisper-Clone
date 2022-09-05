@@ -1,3 +1,4 @@
+// @ts-nocheck
 import express, { Request, Response } from "express";
 import { fileURLToPath } from "url";
 import { dirname, join as pathJoin } from "path";
@@ -7,12 +8,14 @@ import mongoose from "mongoose";
 import session from "express-session";
 import passport from "passport";
 import passportLocalMongoose from "passport-local-mongoose";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import findOrCreate from "mongoose-find-or-create";
 import dotenv from "dotenv";
 dotenv.config();
 
 const __filename: string = fileURLToPath(import.meta.url);
 const __dirname: string = dirname(__filename);
-const database: any = process.env.DATABASE
+const database: any = process.env.DATABASE;
 const databaseURL: any = `${process.env.MONGO}${database}`;
 
 await mongoose
@@ -43,22 +46,66 @@ app.use(passport.session());
 const userSchema = new mongoose.Schema({
   username: { type: String },
   password: { type: String },
+  googleId: { type: String },
 });
 
 userSchema.plugin(passportLocalMongoose);
+userSchema.plugin(findOrCreate);
 
 const User = mongoose.model("User", userSchema);
 passport.use(User.createStrategy());
 
-passport.serializeUser(User.serializeUser() as any);
-passport.deserializeUser(User.deserializeUser());
+passport.serializeUser((user, cb) => {
+  process.nextTick(() => {
+    return cb(null, {
+      id: user.id,
+      username: user.username,
+      picture: user.picture
+    });
+  });
+});
+
+passport.deserializeUser((user, cb) => {
+  process.nextTick(() => {
+    return cb(null, user);
+  });
+});
+
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      callbackURL: "http://localhost:8080/auth/google/secrets",
+    },
+    (accessToken: any, refreshToken: any, profile: any, cb: any) => {
+      User.findOrCreate({ googleId: profile.id }, (err: any, user: any) => {
+        return cb(err, user);
+      });
+    }
+  )
+);
 
 /* ---------------------------------------------------------------------------------------------- */
 /*                                            Homepage                                            */
 /* ---------------------------------------------------------------------------------------------- */
-app.get("/", (req: Request, res: Response) => {
-  res.render("home");
-});
+app
+  .route("/")
+  .get((req: Request, res: Response) => {
+    if (req.isAuthenticated()) return res.redirect("/secrets");
+    res.render("home");
+  });
+
+app
+  .route("/auth/google")
+  .get(passport.authenticate("google", { scope: ["profile"] }));
+
+app.route("/auth/google/secrets")
+  .get(passport.authenticate("google", { failureRedirect: "/login" }),
+  (req: Request, res: Response) => {
+    res.redirect("/");
+  });
+
 
 /* ---------------------------------------------------------------------------------------------- */
 /*                                              Login                                             */
@@ -66,6 +113,7 @@ app.get("/", (req: Request, res: Response) => {
 app
   .route("/login")
   .get((req: Request, res: Response) => {
+    if (req.isAuthenticated()) return res.redirect("/secrets");
     res.render("login");
   })
   .post((req: Request, res: Response) => {
@@ -130,8 +178,7 @@ app.route("/secrets").get((req: Request, res: Response) => {
 /* ---------------------------------------------------------------------------------------------- */
 /*                                             Logout                                             */
 /* ---------------------------------------------------------------------------------------------- */
-app.route("/logout")
-.get((req: Request, res: Response) => {
+app.route("/logout").get((req: Request, res: Response) => {
   req.logout((err) => {
     if (err) {
       console.log(err);
