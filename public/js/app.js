@@ -78,7 +78,7 @@ passport.use(new FacebookStrategy({
     callbackURL: process.env.FACEBOOK_CALLBACK_URL,
 }, (accessToken, refreshToken, profile, cb) => {
     User.findOrCreate({ facebookId: profile.id }, (err, user) => {
-        return cb(null, profile);
+        return cb(err, user);
     });
 }));
 /* ---------------------------------------------------------------------------------------------- */
@@ -105,7 +105,7 @@ app
 /* ---------------------------------------------------------------------------------------------- */
 app
     .route("/auth/facebook")
-    .get(passport.authenticate("facebook", { scope: ["profile"] }));
+    .get(passport.authenticate("facebook"));
 app
     .route("/auth/facebook/secrets")
     .get(passport.authenticate("facebook", { failureRedirect: "/login" }), (req, res) => {
@@ -204,6 +204,7 @@ app
 })
     .post((req, res) => {
     const submittedSecret = req.body.secret;
+    console.log(req);
     User.findById(req.user.id, (err, foundUser) => {
         foundUser.secret = submittedSecret;
         foundUser.save();

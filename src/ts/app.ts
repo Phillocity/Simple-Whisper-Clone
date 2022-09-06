@@ -99,7 +99,7 @@ passport.use(
     },
     (accessToken: any, refreshToken: any, profile: any, cb: any) => {
       User.findOrCreate({ facebookId: profile.id }, (err: any, user: any) => {
-        return cb(null, profile);
+        return cb(err, user);
       });
     }
   )
@@ -134,7 +134,7 @@ app
 /* ---------------------------------------------------------------------------------------------- */
 app
   .route("/auth/facebook")
-  .get(passport.authenticate("facebook", { scope: ["profile"] }));
+  .get(passport.authenticate("facebook"));
 
 app
   .route("/auth/facebook/secrets")
