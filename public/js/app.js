@@ -23,6 +23,7 @@ await mongoose
     .catch((err) => console.log(err));
 const app = express();
 const port = process.env.PORT;
+app.enable("trust proxy");
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
@@ -66,6 +67,7 @@ passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: process.env.GOOGLE_CALLBACK_URL,
+    proxy: true
 }, (accessToken, refreshToken, profile, cb) => {
     User.findOrCreate({ googleId: profile.id }, (err, user) => {
         return cb(err, user);
@@ -76,6 +78,7 @@ passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_CLIENT_ID,
     clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
     callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+    proxy: true
 }, (accessToken, refreshToken, profile, cb) => {
     User.findOrCreate({ facebookId: profile.id }, (err, user) => {
         return cb(err, user);
@@ -204,7 +207,6 @@ app
 })
     .post((req, res) => {
     const submittedSecret = req.body.secret;
-    console.log(req);
     User.findById(req.user.id, (err, foundUser) => {
         foundUser.secret = submittedSecret;
         foundUser.save();
