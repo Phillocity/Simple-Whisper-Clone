@@ -30,6 +30,7 @@ const port: any = process.env.PORT;
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
+app.enable("trust proxy")
 app.listen(port);
 app.locals.lodash = lodash;
 
