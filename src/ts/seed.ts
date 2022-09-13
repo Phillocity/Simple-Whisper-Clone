@@ -22,6 +22,6 @@ await mongoose
 
 const User = mongoose.model("User", userSchema);
 const userStorage: any[] = []
-for (let index = 0; index < 5; index++) {
+for (let index = 0; index < 500; index++) {
   User.create({ username: faker.internet.userName(), password: faker.internet.password(), secret: faker.hacker.phrase()})
 }
