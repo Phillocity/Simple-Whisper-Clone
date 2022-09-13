@@ -26,7 +26,7 @@ await mongoose
 
 const app: express.Application = express();
 const port: any = process.env.PORT;
-
+app.enable("trust proxy")
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
