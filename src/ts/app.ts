@@ -30,7 +30,6 @@ const port: any = process.env.PORT;
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
-app.enable("trust proxy")
 app.listen(port);
 app.locals.lodash = lodash;
 
@@ -81,6 +80,7 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: process.env.GOOGLE_CALLBACK_URL,
+      proxy: true
     },
     (accessToken: any, refreshToken: any, profile: any, cb: any) => {
       User.findOrCreate({ googleId: profile.id }, (err: any, user: any) => {
@@ -97,6 +97,7 @@ passport.use(
       clientID: process.env.FACEBOOK_CLIENT_ID,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
       callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+      proxy: true
     },
     (accessToken: any, refreshToken: any, profile: any, cb: any) => {
       User.findOrCreate({ facebookId: profile.id }, (err: any, user: any) => {
